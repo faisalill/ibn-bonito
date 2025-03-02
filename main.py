@@ -47,8 +47,7 @@ class DoradoModel(nn.Module):
             input_size=128, hidden_size=128, num_layers=1, batch_first=True
         )
 
-        # Fully Connected Layer
-        self.fc = nn.Linear(128, 4)  # Assuming 4 output classes
+        self.fc = nn.Linear(128, 4)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -60,15 +59,13 @@ class DoradoModel(nn.Module):
         x = self.conv3(x)
         x = torch.relu(x)
 
-        # Reshape for LSTM (batch_size, seq_length, features)
         x = x.permute(0, 2, 1)
 
         x, _ = self.lstm1(x)
         x, _ = self.lstm2(x)
         x, _ = self.lstm3(x)
 
-        x = self.fc(x[:, -1, :])  # Use last LSTM output for classification
-
+        x = self.fc(x[:, -1, :])
         return x
 
 
