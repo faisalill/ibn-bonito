@@ -1,41 +1,77 @@
+# ==========================================
+# Dorado (Oxford Nanopore) Basecaller Model
+# ==========================================
+
+# [MODEL CONFIGURATION]
 [model]
-package = "bonito.crf"
+package = "bonito.crf" # Model type: Uses Bonito's CRF-based basecalling approach
 
+# [OUTPUT LABELS]
 [labels]
-labels = [ "N", "A", "C", "G", "T",]
+labels = [
+  "N",
+  "A",
+  "C",
+  "G",
+  "T",
+] # Output classes: Unknown (N), DNA bases (A, C, G, T)
 
+# [INPUT CONFIGURATION]
 [input]
-features = 1
+features = 1 # Number of input features per timestep (single-channel raw nanopore signal)
 
+# [CRF GLOBAL NORMALIZATION]
 [global_norm]
-state_len = 4
+state_len = 4 # Length of each state in the CRF (used to model base transitions)
 
+# [SIGNAL SCALING STRATEGY]
 [scaling]
-strategy = "pa"
+strategy = "pa" # "pa" (Peak Alignment) strategy used to normalize signals
 
+# [RUN INFORMATION]
 [run_info]
-sample_type = "dna"
-sample_rate = 5000
+sample_type = "dna" # Specifies the type of sample (DNA basecalling)
+sample_rate = 5000  # Nanopore signal sampling rate (5000 samples per second)
 
+# [BASECALLER CHUNKING]
 [basecaller]
-chunksize = 10000
-overlap = 500
+chunksize = 10000 # Number of samples processed per chunk
+overlap = 500     # Number of overlapping samples between consecutive chunks
 
+# [SIGNAL STANDARDIZATION]
 [standardisation]
-standardise = 1
-mean = 93.69239463939118
-stdev = 23.506745239082388
+standardise = 1            # Enable normalization of input signals
+mean = 93.69239463939118   # Precomputed mean of raw signal distribution
+stdev = 23.506745239082388 # Precomputed standard deviation
 
+# [QSCORE CALIBRATION]
 [qscore]
-scale = 1.05
-bias = -0.6
+scale = 1.05 # Scale factor for quality scores
+bias = -0.6  # Bias adjustment for basecalling confidence
 
+# ==========================================
+# NEURAL NETWORK ARCHITECTURE
+# ==========================================
 [encoder]
-type = "serial"
+type = "serial" # Defines a sequential encoder model
+
+# Layer 1: 1D Convolution (Feature Extraction)
 [[encoder.sublayers]]
 type = "convolution"
-insize = 1
-size = 16
+insize = 1           # Input size (1D signal)
+size = 16            # Number of output channels (feature maps)
+bias = true          # Enable bias term
+winlen = 5           # Kernel size = 5
+stride = 1           # Stride = 1 (preserves input size)
+padding = 2          # Padding = 2 (same output size)
+activation = "swish" # Non-linear activation function
+norm = "batchnorm"   # Apply batch normalization
+
+# Layer 2: Another 1D Convolution Layer
+[[encoder.sublayers]]
+type = "convolution"
+insize = 16          # Input from previous conv layer
+size = 16            # Output channels remain 16
 bias = true
 winlen = 5
 stride = 1
@@ -43,79 +79,78 @@ padding = 2
 activation = "swish"
 norm = "batchnorm"
 
+# Layer 3: Large-Kernel Convolution
 [[encoder.sublayers]]
 type = "convolution"
 insize = 16
-size = 16
+size = 384           # Expands feature size significantly
 bias = true
-winlen = 5
-stride = 1
-padding = 2
-activation = "swish"
-norm = "batchnorm"
-
-[[encoder.sublayers]]
-type = "convolution"
-insize = 16
-size = 384
-bias = true
-winlen = 19
-stride = 6
+winlen = 19          # Large receptive field (19)
+stride = 6           # Downsampling factor = 6
 padding = 9
-activation = "tanh"
+activation = "tanh"  # Tanh activation for nonlinear transformations
 norm = "batchnorm"
 
+# Layer 4: Permutation Layer (Rearrange Tensor Dimensions)
 [[encoder.sublayers]]
 type = "permute"
-dims = [ 2, 0, 1,]
+dims = [
+  2,
+  0,
+  1,
+] # Reorders (Batch, Channels, Time) → (Time, Batch, Channels) for LSTM
+
+# Layer 5-9: Bi-Directional LSTM Layers
+[[encoder.sublayers]]
+type = "lstm"
+size = 384    # Hidden size of LSTM
+insize = 384  # Input size remains 384
+bias = true   # Enable LSTM bias
+reverse = 1   # First LSTM runs in reverse direction
 
 [[encoder.sublayers]]
 type = "lstm"
 size = 384
 insize = 384
 bias = true
-reverse = 1
+reverse = 0   # Second LSTM runs forward (bidirectional LSTM)
 
 [[encoder.sublayers]]
 type = "lstm"
 size = 384
 insize = 384
 bias = true
-reverse = 0
+reverse = 1   # Third LSTM runs in reverse
 
 [[encoder.sublayers]]
 type = "lstm"
 size = 384
 insize = 384
 bias = true
-reverse = 1
+reverse = 0   # Fourth LSTM runs forward
 
 [[encoder.sublayers]]
 type = "lstm"
 size = 384
 insize = 384
 bias = true
-reverse = 0
+reverse = 1   # Fifth LSTM runs in reverse
 
-[[encoder.sublayers]]
-type = "lstm"
-size = 384
-insize = 384
-bias = true
-reverse = 1
-
+# Final Layer: Linear CRF Encoder (Outputs Base Probabilities)
 [[encoder.sublayers]]
 type = "linearcrfencoder"
-insize = 384
-n_base = 4
-state_len = 4
-bias = false
-blank_score = 2.0
+insize = 384              # Takes LSTM output
+n_base = 4                # 4 DNA bases (A, C, G, T)
+state_len = 4             # CRF sequence state length
+bias = false              # No bias term in final layer
+blank_score = 2.0         # Score for blank transitions in CRF
 
+# Clamping Layer (Output Constraint)
 [[encoder.sublayers]]
 type = "clamp"
-min = -5.0
-max = 5.0
+min = -5.0     # Limit minimum output value
+max = 5.0      # Limit maximum output value
 
+# [TRAINING DATASET]
 [training_dataset]
-hash = "ac564e79136fdb80e7fb24118f329f14c220baf90aad4fb5197f14f0fa0817bd"
+hash = "ac564e79136fdb80e7fb24118f329f14c220baf90aad4fb5197f14f0fa0817bd" # Dataset integrity hash
