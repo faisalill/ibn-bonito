@@ -1,14 +1,13 @@
-import contextlib
+import os
 import shutil
 import sys
-from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
+from logging import getLogger
 from pathlib import Path
 from zipfile import ZipFile
+
 import requests
 from tqdm import tqdm
-import os
-from logging import getLogger
-
 
 __dir__ = Path(__file__).parent
 __models_dir__ = __dir__ / "models"
@@ -40,11 +39,14 @@ def tqdm_environ():
 
 
 class Printer:
-    def __init__(self):
-        print("[available models]", file=sys.stderr)
+    def show(self, model_list):
+        print("[available models]")
+        for model in model_list:
+            print(f" - {model}")
 
-    def download(self, fstem):
-        print(f" - {fstem}", file=sys.stderr)
+    def show_specific(self, model_name):
+        print("Downloading model:")
+        print(f" - {model_name}", file=sys.stderr)
 
 
 class Downloader:
@@ -194,10 +196,41 @@ def argparser():
 
 # bonito download --models --show
 def download_models_show():
-    dl = Printer()
-    for model in models:
-        dl.download(model)
+    pr = Printer()
+    pr.show(models)
+
+
+# bonito download --models {model_name}
+def download_model_specific(model_name):
+    if model_name not in models:
+        print("Model does not exist. Please pick a model from:")
+        pr = Printer()
+        pr.show(models)
+    else:
+        pr = Printer()
+        pr.show_specific(model_name)
+        dl = Downloader(__models_dir__, True)
+        dl.download(model_name)
+
+
+# bonito download --models
+def download_models_all(model_list):
+    dl = Downloader(__models_dir__, True)
+    for model in model_list:
+        if model not in models:
+            print(f"{model} does not exist. Please pick a model from:")
+            pr = Printer()
+            pr.show(models)
+            break
+        else:
+            print(f"Downloading Model: {model}")
+            dl.download(model)
+
+    print("Downloading All Models: ")
 
 
 def health():
+    # download_models_show()
+    # download_model_specific("dna_r10.4.1_e8.2_400bps_hac@v5.0.0")
+    ###### download_models_all(models)
     print("Code Not Breaking")

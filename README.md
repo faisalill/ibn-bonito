@@ -7,19 +7,36 @@ Ibn Bonito is an FPGA based solution to run [Bontio](https://github.com/nanopore
 Get started off by cloning the repo:
 
 ```bash
- git clone https://github.com/faisalill/ibn-bonito.git 
+git clone https://github.com/faisalill/ibn-bonito.git 
 ```
 
 Install all the required python modules:
 
 ```bash
-  pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 To show all available models:
 
 ```
-  download.py -> download_models_show()
+download.py -> download_models_show()
+```
+
+To download a specific model:
+
+```
+download.py -> download_model_specific(model_name)
+```
+
+> To change the default output directory where models are stored:
+> Change
+> download.py -> `__models_dir__ = __dir__ / "{desired_directory}"`
+> Default is "models"
+
+To download all models:
+
+```
+download.py -> download_model_specific(model_name)
 ```
 
 ```
