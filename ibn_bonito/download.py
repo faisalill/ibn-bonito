@@ -192,6 +192,12 @@ def download_models_all(model_list):
     print("Downloading All Models: ")
 
 
+def download_training_show_all():
+    print("[available training data sets]")
+    for set in training_data_sets:
+        print(f" - {set}")
+
+
 # bonito download --training {training_data_set_name}
 def download_training_data_specific(training_data_set_name):
     if training_data_set_name not in training_data_sets:
@@ -211,6 +217,7 @@ def main():
     # download_models_show()
     # download_model_specific("dna_r10.4.1_e8.2_400bps_hac@v5.0.0")
     ###### download_models_all(models)
+    # download_training_show_all()
     # download_training_data_specific("example_data_dna_r10.4.1_v0")
     print("download.py")
 
