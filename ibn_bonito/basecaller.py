@@ -18,6 +18,7 @@ from glob import glob
 import re
 from importlib import import_module
 from torch.cuda import get_device_capability
+from model import Model
 
 __dir__ = Path(__file__).parent
 __models_dir__ = __dir__ / "models"
@@ -160,8 +161,8 @@ def _load_model(model_file, config, device, half=None, use_koi=False):
     return model
 
 
-def health():
-    dirname = "./models/dna_r10.4.1_e8.2_400bps_hac@v5.0.0/"
+def run_model(model_dir):
+    dirname = model_dir
     weights = get_last_checkpoint(dirname)
     print("Weight Loaded Successfully")
     config = toml.load(os.path.join(dirname, "config.toml"))
@@ -170,8 +171,46 @@ def health():
     overlap = config["basecaller"]["overlap"]
     quantize = False
     config = set_config_defaults(config, chunksize, batchsize, overlap, quantize)
-    _load_model(weights, config, "cpu", use_koi=False)
+    device = "cuda"
+    use_koi = False
+    half = None
+    model = Model(config)
+    if use_koi:
+        config["basecaller"]["chunksize"] -= (
+            config["basecaller"]["chunksize"] % model.stride
+        )
+        # overlap must be even multiple of stride for correct stitching
+        config["basecaller"]["overlap"] -= config["basecaller"]["overlap"] % (
+            model.stride * 2
+        )
+        model.use_koi(
+            batchsize=config["basecaller"]["batchsize"],
+            chunksize=config["basecaller"]["chunksize"],
+            quantize=config["basecaller"]["quantize"],
+        )
+
+    state_dict = torch.load(weights, map_location=device)
+    state_dict = {
+        k2: state_dict[k1] for k1, k2 in match_names(state_dict, model).items()
+    }
+    new_state_dict = OrderedDict()
+    for k, v in state_dict.items():
+        name = k.replace("module.", "")
+        new_state_dict[name] = v
+
+    model.load_state_dict(new_state_dict)
+
+    if half is None:
+        half = half_supported()
+
+    if half:
+        model = model.half()
+    model.eval()
+    model.to(device)
+
     print("Code is not breaking!!!")
 
 
-health()
+def basecaller():
+    model_dir = "./models/dna_r10.4.1_e8.2_400bps_hac@v5.0.0/"
+    run_model(model_dir)
