@@ -150,48 +150,11 @@ models = [
     "rna002_70bps_sup@v3",
 ]
 
-training = [
+training_data_sets = [
     "example_data_dna_r9.4.1_v0",
     "example_data_dna_r10.4.1_v0",
     "example_data_rna004_v0",
 ]
-
-
-def download_files(out_dir, file_list, show, force):
-    dl = Printer() if show else Downloader(out_dir, force)
-    for remote_file in file_list:
-        try:
-            dl.download(remote_file)
-        except FileNotFoundError:
-            print(f" - Failed to download: {remote_file}")
-
-
-def main(args):
-    """
-    Download models and training sets
-    """
-    if args.models or args.all:
-        out_dir = __models_dir__ if args.out_dir is None else args.out_dir
-        download_files(out_dir, models, args.show, args.force)
-    if args.training or args.all:
-        out_dir = __data_dir__ if args.out_dir is None else args.out_dir
-        download_files(out_dir, training, args.show, args.force)
-
-
-def argparser():
-    parser = ArgumentParser(
-        formatter_class=ArgumentDefaultsHelpFormatter, add_help=False
-    )
-    parser.add_argument("--out_dir", default=None, type=Path)
-    parser.add_argument("--list", "--show", dest="show", action="store_true")
-    parser.add_argument("-f", "--force", action="store_true")
-
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--all", action="store_true")
-    group.add_argument("--models", action="store_true")
-    group.add_argument("--training", action="store_true")
-
-    return parser
 
 
 # bonito download --models --show
@@ -229,8 +192,27 @@ def download_models_all(model_list):
     print("Downloading All Models: ")
 
 
-def health():
+# bonito download --training {training_data_set_name}
+def download_training_data_specific(training_data_set_name):
+    if training_data_set_name not in training_data_sets:
+        print(
+            f"{training_data_set_name} does not exist. Please pick a set from the following: "
+        )
+        print("[available training sets]")
+        for set in training_data_sets:
+            print(f" - {set}")
+    else:
+        dl = Downloader(__data_dir__, True)
+        print(f"Downloading Training Data: {training_data_set_name}")
+        dl.download(training_data_set_name)
+
+
+def main():
     # download_models_show()
     # download_model_specific("dna_r10.4.1_e8.2_400bps_hac@v5.0.0")
     ###### download_models_all(models)
-    print("Code Not Breaking")
+    # download_training_data_specific("example_data_dna_r10.4.1_v0")
+    print("download.py")
+
+
+main()

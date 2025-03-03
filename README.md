@@ -16,6 +16,14 @@ Install all the required python modules:
 pip install -r requirements.txt
 ```
 
+## download.py
+
+Run
+
+```bash
+python download.py
+```
+
 To show all available models:
 
 ```
