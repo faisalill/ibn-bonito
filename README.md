@@ -4,7 +4,13 @@ Ibn Bonito is an FPGA based solution to run [Bontio](https://github.com/nanopore
 
 > Since pip install ont-bonito does not work this repo contains the non cli way to do the same.
 
-Get started by installing all the required python modules:
+Get started off by cloning the repo:
+
+```bash
+ git clone https://github.com/faisalill/ibn-bonito.git 
+```
+
+Install all the required python modules:
 
 ```bash
   pip install -r requirements.txt
