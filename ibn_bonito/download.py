@@ -211,6 +211,7 @@ def download_training_data_specific(training_data_set_name):
         dl = Downloader(__data_dir__, True)
         print(f"Downloading Training Data: {training_data_set_name}")
         dl.download(training_data_set_name)
+        print("Downloaded Training Data Set Successfully")
 
 
 def main():
@@ -218,7 +219,7 @@ def main():
     # download_model_specific("dna_r10.4.1_e8.2_400bps_hac@v5.0.0")
     ###### download_models_all(models)
     # download_training_show_all()
-    # download_training_data_specific("example_data_dna_r10.4.1_v0")
+    download_training_data_specific("example_data_dna_r10.4.1_v0")
     print("download.py")
 
 

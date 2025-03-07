@@ -161,10 +161,10 @@ def _load_model(model_file, config, device, half=None, use_koi=False):
     return model
 
 
-def run_model(model_dir):
+def get_model(model_dir):
     dirname = model_dir
     weights = get_last_checkpoint(dirname)
-    print("Weight Loaded Successfully")
+    print("Weights Loaded Successfully")
     config = toml.load(os.path.join(dirname, "config.toml"))
     chunksize = config["basecaller"]["chunksize"]
     batchsize = config["basecaller"]["batchsize"]
@@ -207,10 +207,13 @@ def run_model(model_dir):
         model = model.half()
     model.eval()
     model.to(device)
+    return model
 
-    print("Code is not breaking!!!")
 
-
-def basecaller():
-    model_dir = "./models/dna_r10.4.1_e8.2_400bps_hac@v5.0.0/"
-    run_model(model_dir)
+# def basecaller(model_dir):
+#     model = run_model(model_dir)
+#     print("Model loaded Successfully")
+#     return model
+#
+#
+# basecaller(model_dir="./models/dna_r10.4.1_e8.2_400bps_hac@v5.0.0/")
